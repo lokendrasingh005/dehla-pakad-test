@@ -2917,7 +2917,6 @@ function closeModal(){_reactMenuOpen=false;document.getElementById('modal').clas
    network, anywhere), and fall back to a public relay if that fetch
    ever fails (offline dev preview, metered outage, etc). */
 const METERED_DOMAIN='dehlapakad.metered.live';
-const METERED_API_KEY='e3361c56440b813647c3b03278487b2d3f70';
 const FALLBACK_ICE_SERVERS=[
   {urls:'stun:stun.l.google.com:19302'},
   {urls:'stun:stun1.l.google.com:19302'},
@@ -2966,7 +2965,7 @@ function fetchIceServers(){
     try{
       const ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
       const t=ctrl?setTimeout(()=>ctrl.abort(),4000):null;
-      const res=await fetch('https://'+METERED_DOMAIN+'/api/v1/turn/credentials?apiKey='+METERED_API_KEY,ctrl?{signal:ctrl.signal}:{});
+      const res=await fetch('/api/turn-credentials',ctrl?{signal:ctrl.signal}:{});
       if(t)clearTimeout(t);
       if(!res.ok) throw new Error('turn creds http '+res.status);
       const servers=await res.json();
