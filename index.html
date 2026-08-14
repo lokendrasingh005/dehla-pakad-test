@@ -751,7 +751,6 @@ html,body{background:#0a0a0a;}
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
-  <button onclick="window.location.href='dehlaads://showinterstitial'" style="position:fixed;top:10px;left:10px;z-index:9999;">TEST AD</button>
   <div id="splash">
   <img id="splash-logo" src="icon-512.png">
   <div id="splash-title">DEHLA COAT</div>
@@ -1084,6 +1083,7 @@ function beats(c,d,lead,trump){
 ══════════════════════════════════════ */
 let G=null;
 let DEALT_ANIM_PENDING=false; // set true right after a fresh deal; consumed once by renderArc
+let AD_GAME_COUNTER=0; // counts hands finished; every 2nd hand triggers an interstitial ad
 
 /* ── Room coat history (item 13) ──
    Canonical [TeamA,TeamB] coat counts for the lifetime of this room.
@@ -1501,7 +1501,14 @@ function deal8(){
 /* ══════════════════════════════════════
    END HAND
 ══════════════════════════════════════ */
-function endHand(){
+function maybeShowInterstitialAd(){
+  AD_GAME_COUNTER++;
+  if(AD_GAME_COUNTER>=2){
+    AD_GAME_COUNTER=0;
+    setTimeout(()=>{ window.location.href='dehlaads://showinterstitial'; },1800);
+  }
+}
+  function endHand(){
   G.gameOver=true;G.phase='over';
   const u=G.tTens[0],t=G.tTens[1];
   const ut=G.tTricks[0],tt=G.tTricks[1];
@@ -1541,6 +1548,7 @@ function endHand(){
   const body=coat+'<div class="scorerow"><div class="scorebox'+(iWon===true?' win':'')+'"><div class="sbt">Team A</div><div class="sbn">'+u+'<span style="font-size:15px"> tens</span></div><div class="sbsub">'+ut+' tricks</div></div><div class="scorebox'+(iWon===false?' win':'')+'"><div class="sbt">Team B</div><div class="sbn">'+t+'<span style="font-size:15px"> tens</span></div><div class="sbsub">'+tt+' tricks</div></div></div>';
   showModal(title,body,NET.mode==='client'?[]:[{lbl:'New Game',fn:newGame}],true);
   if(NET.mode==='host')NET.broadcast({type:'modal',title,body});
+  maybeShowInterstitialAd();
 }
 
 /* ══════════════════════════════════════
