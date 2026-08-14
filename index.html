@@ -1088,15 +1088,27 @@ function triggerAdThenStart(startFn){
   // MUST be called synchronously from a real button tap — no setTimeout —
   // or Android shows the "Open with?" chooser instead of the ad directly.
   AD_PENDING_START=startFn;
+  if(AD_SAFETY_TIMER)clearTimeout(AD_SAFETY_TIMER);
+  // Safety net: if none of visibilitychange/focus/pageshow ever fire
+  // (some devices don't reliably report it through the translucent ad
+  // activity), start the game anyway after a few seconds rather than
+  // leaving the player stuck on the Deal Cards screen forever.
+  AD_SAFETY_TIMER=setTimeout(consumeAdPendingStart,6000);
   window.location.href='dehlaads://showinterstitial';
 }
+function consumeAdPendingStart(){
+  if(!AD_PENDING_START) return;
+  const fn=AD_PENDING_START;
+  AD_PENDING_START=null;
+  if(AD_SAFETY_TIMER){clearTimeout(AD_SAFETY_TIMER);AD_SAFETY_TIMER=null;}
+  fn();
+}
+let AD_SAFETY_TIMER=null;
 document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible'&&AD_PENDING_START){
-    const fn=AD_PENDING_START;
-    AD_PENDING_START=null;
-    fn();
-  }
+  if(document.visibilityState==='visible') consumeAdPendingStart();
 });
+window.addEventListener('focus',consumeAdPendingStart);
+window.addEventListener('pageshow',consumeAdPendingStart);
 let AD_GAME_COUNTER=0; // counts hands finished; every 2nd hand triggers an interstitial ad
 
 /* ── Room coat history (item 13) ──
