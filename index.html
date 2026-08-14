@@ -461,15 +461,15 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:
 #mbox.mbox-lg{max-width:400px;min-height:56vh;padding:40px 26px;display:flex;flex-direction:column;justify-content:center;}
 #mtitle{font-family:'Cinzel',serif;font-size:25px;color:var(--gold);margin-bottom:14px;letter-spacing:1px;}
 #mbox.mbox-lg #mtitle{font-size:32px;margin-bottom:20px;}
-#mbox.mbox-lg #mbody{font-size:17px;margin-bottom:28px;}
-#mbody{font-size:15px;color:rgba(255,255,255,.75);line-height:1.85;margin-bottom:20px;}
-#mbody .big{font-size:48px;margin:8px 0;}
-#mbody .scorerow{display:flex;justify-content:space-around;margin:14px 0;gap:12px;}
-#mbody .scorebox{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(201,149,42,.25);border-radius:10px;padding:16px 8px;}
-#mbody .scorebox.win{border-color:var(--gold);background:linear-gradient(160deg,rgba(201,149,42,.28),rgba(201,149,42,.08));box-shadow:0 0 24px rgba(201,149,42,.45);animation:winPulseBox 1s ease-in-out infinite;}
+#mbox.mbox-lg #m{font-size:17px;margin-bottom:28px;}
+#m{font-size:15px;color:rgba(255,255,255,.75);line-height:1.85;margin-bottom:20px;}
+#m .big{font-size:48px;margin:8px 0;}
+#m .scorerow{display:flex;justify-content:space-around;margin:14px 0;gap:12px;}
+#m .scorebox{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(201,149,42,.25);border-radius:10px;padding:16px 8px;}
+#m .scorebox.win{border-color:var(--gold);background:linear-gradient(160deg,rgba(201,149,42,.28),rgba(201,149,42,.08));box-shadow:0 0 24px rgba(201,149,42,.45);animation:winPulseBox 1s ease-in-out infinite;}
 @keyframes winPulseBox{0%,100%{box-shadow:0 0 20px rgba(201,149,42,.4);}50%{box-shadow:0 0 34px rgba(255,205,80,.75);}}
-#mbody .scorebox .sbt{font-family:'Cinzel',serif;font-size:14px;color:var(--gl);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
-#mbody .scorebox .sbn{font-family:'Cinzel',serif;font-size:38px;color:var(--gl);line-height:1;}
+#m .scorebox .sbt{font-family:'Cinzel',serif;font-size:14px;color:var(--gl);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+#m .scorebox .sbn{font-family:'Cinzel',serif;font-size:38px;color:var(--gl);line-height:1;}
 #mbody .scorebox .sbsub{font-size:13px;color:rgba(255,255,255,.5);margin-top:4px;}
 #mbtns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
 #mbox.mbox-lg #mbtns{flex-direction:column;gap:14px;}
@@ -751,6 +751,7 @@ html,body{background:#0a0a0a;}
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
+  <button onclick="window.location.href='dehlaads://showinterstitial'" style="position:fixed;top:10px;left:10px;z-index:9999;">TEST AD</button>
   <div id="splash">
   <img id="splash-logo" src="icon-512.png">
   <div id="splash-title">DEHLA COAT</div>
