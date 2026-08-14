@@ -1083,6 +1083,20 @@ function beats(c,d,lead,trump){
 ══════════════════════════════════════ */
 let G=null;
 let DEALT_ANIM_PENDING=false; // set true right after a fresh deal; consumed once by renderArc
+let AD_PENDING_START=null; // holds the function to run once the player returns from the ad
+function triggerAdThenStart(startFn){
+  // MUST be called synchronously from a real button tap — no setTimeout —
+  // or Android shows the "Open with?" chooser instead of the ad directly.
+  AD_PENDING_START=startFn;
+  window.location.href='dehlaads://showinterstitial';
+}
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'&&AD_PENDING_START){
+    const fn=AD_PENDING_START;
+    AD_PENDING_START=null;
+    fn();
+  }
+});
 let AD_GAME_COUNTER=0; // counts hands finished; every 2nd hand triggers an interstitial ad
 
 /* ── Room coat history (item 13) ──
@@ -1546,9 +1560,8 @@ function maybeShowInterstitialAd(){
   document.getElementById('histbtn').style.display='none';
   const coat=isCoat?'<div class="big">\uD83D\uDC51</div><div style="color:var(--gl);font-family:Cinzel;font-size:13px;letter-spacing:1px;margin-bottom:8px">COAT \u2014 ALL 4 TENS CAPTURED!</div>':(!isDraw?'<div class="big">\uD83C\uDF89</div>':'');
   const body=coat+'<div class="scorerow"><div class="scorebox'+(iWon===true?' win':'')+'"><div class="sbt">Team A</div><div class="sbn">'+u+'<span style="font-size:15px"> tens</span></div><div class="sbsub">'+ut+' tricks</div></div><div class="scorebox'+(iWon===false?' win':'')+'"><div class="sbt">Team B</div><div class="sbn">'+t+'<span style="font-size:15px"> tens</span></div><div class="sbsub">'+tt+' tricks</div></div></div>';
-  showModal(title,body,NET.mode==='client'?[]:[{lbl:'New Game',fn:newGame}],true);
+  showModal(title,body,NET.mode==='client'?[]:[{lbl:'New Game',fn:()=>triggerAdThenStart(newGame)}],true);
   if(NET.mode==='host')NET.broadcast({type:'modal',title,body});
-  maybeShowInterstitialAd();
 }
 
 /* ══════════════════════════════════════
@@ -4000,7 +4013,7 @@ function showDifficultyModal(onStart,onBack){
   '<button id="diffbtn2" class="diffopt med'+(DIFFICULTY===2?' sel':'')+'" onclick="setDiff(2)">⚡ Medium</button>'+
   '<button id="diffbtn3" class="diffopt hard'+(DIFFICULTY===3?' sel':'')+'" onclick="setDiff(3)">🔥 Hard</button>'+
   '</div>',
-  [{lbl:'Back',fn:()=>{closeModal();_diffModalOnBack();}},{lbl:'Deal Cards',fn:onStart}]);
+  [{lbl:'Back',fn:()=>{closeModal();_diffModalOnBack();}},{lbl:'Deal Cards',fn:()=>triggerAdThenStart(onStart)}]);
 }
 const PROFILE_KEY='dc_profile';
 const STATS_KEY='dc_stats';
