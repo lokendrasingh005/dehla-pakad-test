@@ -1,8 +1,8 @@
 [{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "com.lokendrasingh.dehlacoat",
-        "sha256_cert_fingerprints": ["4D:78:6B:87:7E:69:83:99:6E:17:8D:29:5A:D9:06:C5:2D:35:DB:57:ED:EC:DB:6B:2C:44:7B:0A:80:BB:90:FE"]
-      }
-    }]
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.lokendrasingh.dehlacoattest",
+    "sha256_cert_fingerprints": ["E6:E0:25:70:E5:2B:EB:4D:83:74:52:19:74:1F:86:E3:8A:74:D7:32:B7:47:F6:1C:88:A2:8C:7D:07:60:76:4A"]
+  }
+}]
