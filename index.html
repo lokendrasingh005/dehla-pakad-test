@@ -3720,6 +3720,7 @@ function cancelRoomSetup(){
 }
 async function hostRoom(name){
   if(typeof Peer==='undefined'){fmsg('Could not load networking library — check your connection');return;}
+  G=null; // clear any leftover game state (e.g. from an unfinished single-player game) so the lobby always shows
   ROOMDEBUG=[];_roomSetupCancelled=false;
   roomDebugLog('hostRoom() called, name='+name);
   NET.mode='host';NET.mySeat=0;NET.humanSeats=new Set();NET.conns={};
