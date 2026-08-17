@@ -3778,8 +3778,20 @@ function attemptHostPeer(iceConfig,forceRelay){
     if(settled)return;
     settled=true;clearTimeout(timeout);
     if(_roomSetupCancelled)return;
-    if(!G||G.gameOver) showRoomLobby();
-    startHeartbeat();
+    try{
+      roomDebugLog('calling showRoomLobby()...');
+      if(!G||G.gameOver) showRoomLobby();
+      roomDebugLog('showRoomLobby() returned OK');
+    }catch(err){
+      roomDebugLog('showRoomLobby() THREW: '+(err&&err.message?err.message:err));
+    }
+    try{
+      roomDebugLog('calling startHeartbeat()...');
+      startHeartbeat();
+      roomDebugLog('startHeartbeat() returned OK');
+    }catch(err){
+      roomDebugLog('startHeartbeat() THREW: '+(err&&err.message?err.message:err));
+    }
   });
   peer.on('connection',conn=>{
     roomDebugLog('incoming connection from a client');
