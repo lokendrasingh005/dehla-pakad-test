@@ -3696,8 +3696,32 @@ function applyRemoteState(payload,names,aiSeats){
 }
 
 /* ── HOST ── */
+let ROOMDEBUG=[];
+let _roomSetupCancelled=false;
+function roomDebugLog(msg){
+  const t=new Date().toLocaleTimeString();
+  ROOMDEBUG.push('['+t+'] '+msg);
+  if(ROOMDEBUG.length>40) ROOMDEBUG.shift();
+  console.log('[ROOM]',msg);
+  const el=document.getElementById('roomDebugLog');
+  if(el) el.innerHTML=ROOMDEBUG.map(l=>'<div>'+l+'</div>').join('');
+}
+window.addEventListener('error',function(e){roomDebugLog('JS ERROR: '+(e&&e.message?e.message:e));});
+window.addEventListener('unhandledrejection',function(e){roomDebugLog('PROMISE REJECTED: '+(e&&e.reason&&e.reason.message?e.reason.message:e.reason));});
+function roomDebugPanel(){
+  return '<div id="roomDebugLog" style="margin-top:10px;max-height:120px;overflow-y:auto;background:rgba(0,0,0,.4);border:1px solid rgba(201,149,42,.25);border-radius:8px;padding:6px 8px;font-family:monospace;font-size:9px;color:rgba(255,255,255,.55);text-align:left;">'+ROOMDEBUG.map(function(l){return '<div>'+l+'</div>';}).join('')+'</div>';
+}
+function cancelRoomSetup(){
+  _roomSetupCancelled=true;
+  try{ if(NET.peer) NET.peer.destroy(); }catch(e){}
+  NET.mode='offline';NET.peer=null;
+  closeModal();
+  showMainMenu();
+}
 async function hostRoom(name){
   if(typeof Peer==='undefined'){fmsg('Could not load networking library — check your connection');return;}
+  ROOMDEBUG=[];_roomSetupCancelled=false;
+  roomDebugLog('hostRoom() called, name='+name);
   NET.mode='host';NET.mySeat=0;NET.humanSeats=new Set();NET.conns={};
   NET.aiControlled=new Set();NET.migrationOffset=0;
   NET.names[0]=name||'You';
@@ -3705,68 +3729,77 @@ async function hostRoom(name){
   ROOMCOAT=[0,0];STARTER_SEAT=0; // fresh room — game 1 starts A1, coat history purged
   updateRoomCoatUI(ROOMCOAT);
   updateBotbarVisibility();
-  showModal('🎴 Creating Room','<div style="font-size:12px;color:rgba(255,255,255,.6)">Setting up your room…</div>'+iceStatusLine(),[]);
-  // Guard against getIceConfig() itself hanging (seen after solo→multiplayer) —
-  // race it against a hard timeout and fall back to the public relay list.
+  showModal('🎴 Creating Room','<div style="font-size:12px;color:rgba(255,255,255,.6)">Setting up your room…</div>'+iceStatusLine()+roomDebugPanel(),[{lbl:'Cancel',fn:cancelRoomSetup}]);
+  roomDebugLog('modal shown, requesting ICE config...');
   let iceConfig;
   try{
     iceConfig=await Promise.race([
       getIceConfig(),
       new Promise((_,rej)=>setTimeout(()=>rej(new Error('ice-timeout')),6000))
     ]);
+    roomDebugLog('ICE config resolved OK ('+((iceConfig&&iceConfig.iceServers)?iceConfig.iceServers.length:0)+' servers)');
   }catch(e){
+    roomDebugLog('ICE config timed out/failed: '+e.message+' — using fallback list');
     iceConfig={iceServers:FALLBACK_ICE_SERVERS};
   }
+  if(_roomSetupCancelled){roomDebugLog('cancelled before Peer creation');return;}
   attemptHostPeer(iceConfig,false);
 }
 function attemptHostPeer(iceConfig,forceRelay){
-  console.log('[attemptHostPeer] starting, forceRelay=',forceRelay);
+  roomDebugLog('attemptHostPeer start, forceRelay='+forceRelay);
   let settled=false;
   const cfg=forceRelay?{iceServers:iceConfig.iceServers,iceTransportPolicy:'relay'}:iceConfig;
   let peer;
   try{
     peer=new Peer('dehla-'+NET.roomCode,{debug:0,config:cfg});
+    roomDebugLog('Peer object constructed OK, id=dehla-'+NET.roomCode);
   }catch(err){
-    console.error('[attemptHostPeer] new Peer() threw synchronously:',err);
-    showModal('Could Not Create Room','<div class="mp-err">Something went wrong starting the connection. Please try again.</div>',[{lbl:'Try Again',fn:()=>{closeModal();hostRoom(NET.names[0]);}},{lbl:'Back to Menu',fn:()=>{closeModal();showMainMenu();}}]);
+    roomDebugLog('new Peer() THREW: '+(err&&err.message?err.message:err));
+    showModal('Could Not Create Room','<div class="mp-err">Something went wrong starting the connection. Please try again.</div>'+roomDebugPanel(),[{lbl:'Try Again',fn:()=>{closeModal();hostRoom(NET.names[0]);}},{lbl:'Back to Menu',fn:()=>{closeModal();showMainMenu();}}]);
     return;
   }
   NET.peer=peer;
-  console.log('[attemptHostPeer] Peer object created, waiting for open/error/timeout');
+  roomDebugLog('waiting for peer open/error/timeout...');
   const timeout=setTimeout(()=>{
+    roomDebugLog('12s TIMEOUT fired (settled='+settled+')');
     if(settled)return;
     settled=true;
     try{peer.destroy();}catch(e){}
+    if(_roomSetupCancelled)return;
     if(!forceRelay){
-      showModal('🎴 Creating Room','<div style="font-size:12px;color:rgba(255,255,255,.6)">Still setting up… trying a relay route</div>'+iceStatusLine(),[]);
+      showModal('🎴 Creating Room','<div style="font-size:12px;color:rgba(255,255,255,.6)">Still setting up… trying a relay route</div>'+iceStatusLine()+roomDebugPanel(),[{lbl:'Cancel',fn:cancelRoomSetup}]);
       attemptHostPeer(iceConfig,true);
     } else {
-      showModal('Could Not Create Room','<div class="mp-err">Room setup timed out — this can happen after switching modes. Please try again.</div>',[{lbl:'Try Again',fn:()=>{closeModal();hostRoom(NET.names[0]);}},{lbl:'Back to Menu',fn:()=>{closeModal();showMainMenu();}}]);
+      showModal('Could Not Create Room','<div class="mp-err">Room setup timed out — this can happen after switching modes. Please try again.</div>'+roomDebugPanel(),[{lbl:'Try Again',fn:()=>{closeModal();hostRoom(NET.names[0]);}},{lbl:'Back to Menu',fn:()=>{closeModal();showMainMenu();}}]);
     }
   },12000);
   peer.on('open',()=>{
+    roomDebugLog('peer OPEN event fired ✅');
     if(settled)return;
     settled=true;clearTimeout(timeout);
+    if(_roomSetupCancelled)return;
     if(!G||G.gameOver) showRoomLobby();
     startHeartbeat();
   });
   peer.on('connection',conn=>{
+    roomDebugLog('incoming connection from a client');
     conn.on('open',()=>{ conn.send({type:'seats',seats:seatSnapshot()}); });
     conn.on('data',data=>handleHostMessage(conn,data));
     conn.on('close',()=>{ if(conn._seat!=null) onSeatDisconnect(conn._seat); });
     conn.on('error',()=>{ if(conn._seat!=null) onSeatDisconnect(conn._seat); });
   });
   peer.on('error',err=>{
-    console.error(err);
+    roomDebugLog('peer ERROR event: '+(err&&err.type?err.type:'')+' '+(err&&err.message?err.message:err));
     if(settled){ fmsg('Room error — please try again'); return; }
     settled=true;clearTimeout(timeout);
+    if(_roomSetupCancelled)return;
     if(!forceRelay){
       attemptHostPeer(iceConfig,true);
     } else {
-      showModal('Could Not Create Room','<div class="mp-err">Something went wrong creating the room. Please try again.</div>',[{lbl:'Try Again',fn:()=>{closeModal();hostRoom(NET.names[0]);}},{lbl:'Back to Menu',fn:()=>{closeModal();showMainMenu();}}]);
+      showModal('Could Not Create Room','<div class="mp-err">Something went wrong creating the room. Please try again.</div>'+roomDebugPanel(),[{lbl:'Try Again',fn:()=>{closeModal();hostRoom(NET.names[0]);}},{lbl:'Back to Menu',fn:()=>{closeModal();showMainMenu();}}]);
     }
   });
-  peer.on('disconnected',()=>{ try{peer.reconnect();}catch(e){} });
+  peer.on('disconnected',()=>{ roomDebugLog('peer DISCONNECTED (signaling), attempting reconnect'); try{peer.reconnect();}catch(e){} });
 }
 /* ── heartbeat: catches seats that die silently ──
    A phone whose app gets force-closed, killed by the OS, or loses
