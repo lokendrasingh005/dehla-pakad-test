@@ -2316,27 +2316,23 @@ function scoreLead(p,idx,card,wm,dist,heapVal,tensAtStake){
   let pTeamCollects=0;
   let pOppCollects=0;
 
-  if(heapCollectionEnabled){
+    if(heapCollectionEnabled){
     if(iWonPrev){
       // I won prev, win again → I collect
-      pTeamCollects=pTeamWins*0.92;
+      pTeamCollects=pTeamWins*Math.min(0.97,0.92*(0.5+pTeamWins));
     } else if(partnerWonPrev){
-      // Partner won prev, I need to win → partner already established
-      // Actually in Dehla Pakad, partner winning then me winning does NOT collect
-      // Only SAME PERSON winning twice collects. So this is trick #1 for me.
-      pTeamCollects=pTeamWins*0.38; // need another win after this
+      pTeamCollects=pTeamWins*Math.min(0.97,0.38*(0.5+pTeamWins));
     } else if(heapIsEmpty){
-      pTeamCollects=pTeamWins*0.35; // trick #1, need another
+      pTeamCollects=pTeamWins*Math.min(0.97,0.35*(0.5+pTeamWins));
     } else if(oppWonPrev){
-      // Opp won last — winning this breaks their streak, but I still need one more
-      pTeamCollects=pTeamWins*0.32;
+      pTeamCollects=pTeamWins*Math.min(0.97,0.32*(0.5+pTeamWins));
     }
 
     // Opponent collection risk
     if(oppWonPrev){
-      pOppCollects=pOppWins*0.88; // opponent about to collect if they win
+      pOppCollects=pOppWins*Math.min(0.97,0.88*(0.5+pOppWins));
     } else {
-      pOppCollects=pOppWins*0.3;
+      pOppCollects=pOppWins*Math.min(0.97,0.3*(0.5+pOppWins));
     }
   }
 
@@ -2365,13 +2361,17 @@ function scoreLead(p,idx,card,wm,dist,heapVal,tensAtStake){
   const isTrump=G.trump&&card.s===G.trump;
   const heapCurrentVal=currentHeapTens*10+G.heapN*0.8;
 
-  if(isHighCard||isTrump){
+    if(isHighCard||isTrump){
     // What is the "opportunity cost" of spending this card now?
     // High card spent on an empty no-ten heap = wasteful
     const cardCost=(cardRV-RV['9'])*1.8;
     const justified=heapCurrentVal+totalTensAtStake*10; // what we gain if it works
+    // How many tens are realistically still out there for a FUTURE heap
+    // this hand? If none, there's no "save it for later" reason to hold back.
+    const futureTensLeft=Math.max(0,4-G.tTens[0]-G.tTens[1]-totalTensAtStake);
+    const futureFactor=Math.min(1,futureTensLeft/2);
     if(justified<cardCost*pTeamWins){
-      score-=cardCost*(1-pTeamWins)*1.2; // penalty proportional to waste probability
+      score-=cardCost*(1-pTeamWins)*1.2*futureFactor; // penalty proportional to waste probability
     }
     // D2. Conservation — when pTeamWins is already near-certain (e.g. an
     // uncontested trump lead), the penalty above vanishes since there's
@@ -2461,22 +2461,22 @@ function scoreFollow(p,idx,card,wm,dist,heapVal,tensAtStake){
   // ── Heap collection probabilities ──
   let pTeamCollects=0, pOppCollects=0;
 
-  if(heapCollectionEnabled){
+    if(heapCollectionEnabled){
     // I win this trick:
     if(myBeats||(!myBeats&&teamWinsAfterMe)){
-      if(iWonPrev) pTeamCollects=pTeamWins*0.91; // I already won prev → collecting now
-      else if(partnerWonPrev) pTeamCollects=pTeamWins*0.35; // partner won prev, I win now → I become prevW, need one more
-      else if(heapIsEmpty) pTeamCollects=pTeamWins*0.32;
-      else if(oppWonPrev) pTeamCollects=pTeamWins*0.30;
-      else pTeamCollects=pTeamWins*0.30;
+      if(iWonPrev) pTeamCollects=pTeamWins*Math.min(0.97,0.91*(0.5+pTeamWins));
+      else if(partnerWonPrev) pTeamCollects=pTeamWins*Math.min(0.97,0.35*(0.5+pTeamWins));
+      else if(heapIsEmpty) pTeamCollects=pTeamWins*Math.min(0.97,0.32*(0.5+pTeamWins));
+      else if(oppWonPrev) pTeamCollects=pTeamWins*Math.min(0.97,0.30*(0.5+pTeamWins));
+      else pTeamCollects=pTeamWins*Math.min(0.97,0.30*(0.5+pTeamWins));
     }
     // Partner wins this trick (team wins but not me):
     if(partnerWinning&&!myBeats){
-      if(partnerWonPrev) pTeamCollects=pTeamWins*0.90; // partner about to collect!
+      if(partnerWonPrev) pTeamCollects=pTeamWins*Math.min(0.97,0.90*(0.5+pTeamWins));
     }
 
-    if(oppWonPrev) pOppCollects=pOppWins*0.87;
-    else pOppCollects=pOppWins*0.28;
+    if(oppWonPrev) pOppCollects=pOppWins*Math.min(0.97,0.87*(0.5+pOppWins));
+    else pOppCollects=pOppWins*Math.min(0.97,0.28*(0.5+pOppWins));
   }
 
   // A. Expected ten gain/loss
@@ -2510,21 +2510,19 @@ function scoreFollow(p,idx,card,wm,dist,heapVal,tensAtStake){
   const isTrump=G.trump&&card.s===G.trump;
   const totalVal=totalTensAtStake*10+heapTricks*0.8;
 
-  if(myBeats&&(isHighCard||isTrump)){
+    if(myBeats&&(isHighCard||isTrump)){
     // I'm trying to win — is the heap worth the card cost?
     const cardCost=(cardRV-RV['9'])*1.5;
     // Justify: if heap has value and I'm likely to hold, it's worth it
     const benefit=pTeamWins*totalVal;
+    // How many tens are realistically still out there for a FUTURE heap
+    // this hand? If none, there's no "save it for later" reason to hold back.
+    const futureTensLeft=Math.max(0,4-G.tTens[0]-G.tTens[1]-totalTensAtStake);
+    const futureFactor=Math.min(1,futureTensLeft/2);
     if(benefit<cardCost*0.5){
-      score-=cardCost*(1-pTeamWins)*1.0; // penalty for likely-futile high card spend
+      score-=cardCost*(1-pTeamWins)*1.0*futureFactor; // penalty for likely-futile high card spend
     }
-    // Extra penalty: spending guaranteed winner (A/K) on empty no-ten heap
-    if(isGuaranteed(card)&&totalTensAtStake===0&&heapTricks<=1){
-      score-=cardCost*1.2; // this is a waste — save guaranteed winner for a better heap
-    }
-  }
-
-  // D. When NOT to win: if team is already winning safely, don't over-win
+     // Extra penalty: spending guaranteed winner (A/K) on empty no-ten heap
   // (BUGFIX: this used to be written as `!card.r==='10'`, which — due to
   // operator precedence — evaluates as `(!card.r)==='10'`, i.e. always
   // false, so this whole rule never fired. That's why the bot would
