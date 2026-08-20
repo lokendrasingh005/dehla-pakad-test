@@ -2519,10 +2519,16 @@ function scoreFollow(p,idx,card,wm,dist,heapVal,tensAtStake){
     // this hand? If none, there's no "save it for later" reason to hold back.
     const futureTensLeft=Math.max(0,4-G.tTens[0]-G.tTens[1]-totalTensAtStake);
     const futureFactor=Math.min(1,futureTensLeft/2);
-    if(benefit<cardCost*0.5){
+        if(benefit<cardCost*0.5){
       score-=cardCost*(1-pTeamWins)*1.0*futureFactor; // penalty for likely-futile high card spend
     }
-     // Extra penalty: spending guaranteed winner (A/K) on empty no-ten heap
+    // Extra penalty: spending guaranteed winner (A/K) on empty no-ten heap
+    if(isGuaranteed(card)&&totalTensAtStake===0&&heapTricks<=1){
+      score-=cardCost*1.2*futureFactor; // this is a waste — save guaranteed winner for a better heap
+    }
+  }
+
+  // D. When NOT to win: if team is already winning safely, don't over-win
   // (BUGFIX: this used to be written as `!card.r==='10'`, which — due to
   // operator precedence — evaluates as `(!card.r)==='10'`, i.e. always
   // false, so this whole rule never fired. That's why the bot would
