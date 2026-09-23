@@ -2912,8 +2912,35 @@ function fmsg(txt,top=35,_fromNet){
 let atHome=false; // tracks whether the main menu is the active screen (for the Android back button)
 let _reactTab='phrases';
 let _reactMenuOpen=false;
-const REACT_PHRASES=['Nice move!','Well played!','Good game!','Awesome! 🎉','Oops! 😅','Hurry up! ⏳','Unlucky!','Let\'s go!'];
-const REACT_EMOJIS=['👏','😂','🔥','😮','👍','😢','🤔','💪','🎉','😅','🙌','😱'];
+const REACT_PHRASES = [
+  'Nice move!',
+  'Well played!',
+  'Good game!',
+  'Awesome! 🎉',
+  'Oops! 😅',
+  'Hurry up! ⏳',
+  'Unlucky!',
+  'Let\'s go!',
+  'Boom! 💥',
+  'Calculated. 😎',
+  'Gotcha! 🎯',
+  'Nice try! 😜',
+  'Sweating yet? 💦',
+  'I got your back! 🤝',
+  'Clock is ticking! ⏰',
+  'Where is the Dehla? 🔍',
+  'What a plot twist! 😱',
+  'You got lucky! 🍀',
+  'Mastermind move! 🧠',
+  'One more game? 🔄',
+  'Playing like a pro! 👑'
+];
+const REACT_EMOJIS = [
+  '👏', '😂', '🔥', '😮', '👍', '😢', '🤔', '💪', '🎉', '😅', '🙌', '😱',
+  '👑', '🏆', '😎', '🎯', '💣', '🤯', '🤦‍♂️', '💀', '🤡', '🧐', '🤫', '🍿',
+  '⏰', '🎴', '💰', '🍀', '💩', '🤬', '😡', '😠', '😤', '👿', '😒', '🙄', 
+  '😬', '💥', '⚡'
+];
 function reactionsMenuBody(){
   const tabs='<div class="react-tabs">'+
     '<button type="button" class="react-tab-btn'+(_reactTab==='phrases'?' sel':'')+'" onclick="switchReactTab(\'phrases\')">💬 Phrases</button>'+
